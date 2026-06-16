@@ -1,0 +1,21 @@
+Windows Registry Editor Version 5.00
+
+; Adds "Open with Neovim (WSL)" to the right-click context menu for all files
+; and registers nvim.exe in the Open With list.
+; Run 2_nvim-setup.sh inside WSL before importing this.
+
+[HKEY_CURRENT_USER\Software\Classes\Applications\nvim.exe]
+"FriendlyAppName"="Neovim (WSL2)"
+"Icon"="wsl.exe"
+
+[HKEY_CURRENT_USER\Software\Classes\Applications\nvim.exe\shell\open\command]
+@="wsl.exe -d Ubuntu bash ~/nvim-open.sh \"%1\""
+
+[-HKEY_CURRENT_USER\Software\Classes\*\shell\OpenWithNvimWSL]
+
+[HKEY_CURRENT_USER\Software\Classes\*\shell\OpenWithNvimWSL]
+@="Open with Neovim (WSL)"
+"Icon"="wsl.exe"
+
+[HKEY_CURRENT_USER\Software\Classes\*\shell\OpenWithNvimWSL\command]
+@="wsl.exe -d Ubuntu bash ~/nvim-open.sh \"%1\""
