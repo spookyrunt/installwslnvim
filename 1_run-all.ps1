@@ -4,8 +4,33 @@
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Step 1: WSL + Ubuntu
-Write-Host "==> Step 1: Installing WSL and Ubuntu..." -ForegroundColor Cyan
-wsl --install -d Ubuntu
+Write-Host "==> Step 1: WSL and Ubuntu setup" -ForegroundColor Cyan
+$WslDir = Read-Host "    Where should WSL be stored? [D:\WSL]"
+if (-not $WslDir) { $WslDir = "D:\WSL" }
+New-Item -ItemType Directory -Force -Path $WslDir | Out-Null
+
+$ImportExisting = Read-Host "    Import an existing WSL backup? (y/N)"
+if ($ImportExisting -eq "y" -or $ImportExisting -eq "Y") {
+    $BackupPath = Read-Host "    Path to backup file (.tar or .vhdx)"
+    if ($BackupPath -match '\.vhdx$') {
+        Write-Host "    Registering vhdx in $WslDir..." -ForegroundColor Cyan
+        Copy-Item $BackupPath "$WslDir\ext4.vhdx" -ErrorAction SilentlyContinue
+        wsl --import-in-place Ubuntu "$WslDir\ext4.vhdx"
+    } else {
+        Write-Host "    Importing tar into $WslDir..." -ForegroundColor Cyan
+        wsl --import Ubuntu $WslDir $BackupPath
+    }
+    Write-Host "    Done." -ForegroundColor Green
+} else {
+    Write-Host "    Installing WSL and Ubuntu..." -ForegroundColor Cyan
+    wsl --install -d Ubuntu
+    Write-Host "    Migrating to $WslDir..." -ForegroundColor Cyan
+    wsl --export Ubuntu "$WslDir\ubuntu-backup.tar"
+    wsl --unregister Ubuntu
+    wsl --import Ubuntu $WslDir "$WslDir\ubuntu-backup.tar"
+    Remove-Item "$WslDir\ubuntu-backup.tar"
+    Write-Host "    Done." -ForegroundColor Green
+}
 
 # Step 2: nvim setup inside WSL
 Write-Host "==> Step 2: Running nvim setup in WSL..." -ForegroundColor Cyan
