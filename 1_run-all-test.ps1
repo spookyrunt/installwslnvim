@@ -1,5 +1,5 @@
 # TEST version
-# Does everything except reboot and WSL install
+# Does everything except WSL and NVIM install
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
@@ -38,7 +38,7 @@ if (-not (Test-Path $LnkPath)) {
     Write-Host "    Shortcut already exists, skipping." -ForegroundColor Gray
 }
 
-# Skip reboot
+# Fin
 Write-Host ""
-Write-Host "==> Test complete. No reboot. Restart WSL manually:" -ForegroundColor Yellow
+Write-Host "==> Test complete. Restart WSL manually:" -ForegroundColor Yellow
 Write-Host "    wsl --shutdown && wsl" -ForegroundColor Gray
