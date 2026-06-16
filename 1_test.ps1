@@ -1,5 +1,4 @@
-# TEST version
-# Does everything except WSL and NVIM install
+# Tests registry and han2f12
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 

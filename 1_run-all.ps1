@@ -50,5 +50,56 @@ if (-not (Test-Path $LnkPath)) {
     Write-Host "    Shortcut already exists, skipping." -ForegroundColor Gray
 }
 
+# Step 5: Install JetBrainsMono Nerd Font
+Write-Host "==> Step 5: Installing JetBrainsMono Nerd Font..." -ForegroundColor Cyan
+$FontCheck = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts\JetBrainsMonoNerdFont-Regular.ttf"
+if (-not (Test-Path $FontCheck)) {
+    $FontUrl = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
+    $FontZip = "$env:TEMP\JetBrainsMono.zip"
+    $FontDir = "$env:TEMP\JetBrainsMono"
+    Invoke-WebRequest -Uri $FontUrl -OutFile $FontZip
+    Expand-Archive -Path $FontZip -DestinationPath $FontDir -Force
+    $Shell = New-Object -ComObject Shell.Application
+    $Fonts = $Shell.Namespace(0x14)
+    Get-ChildItem "$FontDir\*.ttf" | ForEach-Object { $Fonts.CopyHere($_.FullName) }
+    Remove-Item $FontZip, $FontDir -Recurse -Force
+    Write-Host "    Done." -ForegroundColor Green
+} else {
+    Write-Host "    Already installed, skipping." -ForegroundColor Gray
+}
+
+# Step 6: Configure Windows Terminal
+Write-Host "==> Step 6: Configuring Windows Terminal..." -ForegroundColor Cyan
+$SettingsPath = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
+if (Test-Path $SettingsPath) {
+    $s = Get-Content $SettingsPath -Raw | ConvertFrom-Json
+
+    # Theme
+    $s | Add-Member -NotePropertyName "theme" -NotePropertyValue "light" -Force
+
+    # Profile defaults
+    if (-not $s.profiles.defaults) {
+        $s.profiles | Add-Member -NotePropertyName "defaults" -NotePropertyValue ([PSCustomObject]@{}) -Force
+    }
+    $s.profiles.defaults | Add-Member -NotePropertyName "colorScheme" -NotePropertyValue "Solarized Light" -Force
+    $s.profiles.defaults | Add-Member -NotePropertyName "font" -NotePropertyValue ([PSCustomObject]@{ face = "JetBrainsMono Nerd Font" }) -Force
+
+    # nvim profile
+    if (-not ($s.profiles.list | Where-Object { $_.name -eq "nvim" })) {
+        $nvim = [PSCustomObject]@{
+            commandline = "wsl.exe -d Ubuntu -- nvim"
+            guid        = "{$([System.Guid]::NewGuid())}"
+            hidden      = $false
+            name        = "nvim"
+        }
+        $s.profiles.list += $nvim
+    }
+
+    $s | ConvertTo-Json -Depth 10 | Set-Content $SettingsPath -Encoding UTF8
+    Write-Host "    Done." -ForegroundColor Green
+} else {
+    Write-Host "    Windows Terminal settings.json not found, skipping." -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "==> All done. Run 'wsl --shutdown && wsl' to restart WSL." -ForegroundColor Yellow
