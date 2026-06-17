@@ -124,8 +124,9 @@ if (Test-Path $SettingsPath) {
     $ExistingUbuntu = $s.profiles.list | Where-Object { $_.name -eq "Ubuntu" }
     if ($null -ne $ExistingUbuntu) {
       # Update target properties while keeping the auto-detection feature intact
+      $ExistingUbuntu.hidden = $false
       $ExistingUbuntu.commandline = "wsl.exe -d Ubuntu"
-        $ExistingUbuntu.name = "Ubuntu"
+      $ExistingUbuntu.name = "Ubuntu"
     } else {
       # Create a new profile if it does not exist
       $NewUbuntu = [PSCustomObject]@{
