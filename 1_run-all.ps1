@@ -120,11 +120,29 @@ if (Test-Path $SettingsPath) {
         $s.profiles.list += $nvim
     }
 
+    # Configure Ubuntu profile
+    $ExistingUbuntu = $s.profiles.list | Where-Object { $_.name -eq "Ubuntu" }
+    if ($null -ne $ExistingUbuntu) {
+      # Update target properties while keeping the auto-detection feature intact
+      $ExistingUbuntu.commandline = "wsl.exe -d Ubuntu"
+        $ExistingUbuntu.name = "Ubuntu"
+    } else {
+      # Create a new profile if it does not exist
+      $NewUbuntu = [PSCustomObject]@{
+        commandline = "wsl.exe -d Ubuntu"
+          guid        = "{$([System.Guid]::NewGuid())}"
+          hidden      = $false
+          name        = "Ubuntu"
+      }
+      $s.profiles.list += $NewUbuntu
+    }
+
     $s | ConvertTo-Json -Depth 10 | Set-Content $SettingsPath -Encoding UTF8
-    Write-Host "    Done." -ForegroundColor Green
+      Write-Host "    Done." -ForegroundColor Green
 } else {
-    Write-Host "    Windows Terminal settings.json not found, skipping." -ForegroundColor Yellow
+  Write-Host "    Windows Terminal settings.json not found, skipping." -ForegroundColor Yellow
 }
 
 Write-Host ""
 Write-Host "==> All done. Run 'wsl --shutdown && wsl' to restart WSL." -ForegroundColor Yellow
+
