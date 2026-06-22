@@ -8,7 +8,7 @@ echo "==> Updating apt..."
 sudo apt update && sudo apt upgrade -y
 
 echo "==> Installing dependencies..."
-sudo apt install -y git curl unzip ripgrep fd-find python3 python3-pip nodejs npm
+sudo apt install -y git curl unzip ripgrep fd-find python3 python3-pip nodejs npm xclip xsel
 
 # fd-find installs as fdfind, LazyVim expects fd
 if ! command -v fd &>/dev/null; then
@@ -86,4 +86,4 @@ EOF
 chmod +x ~/nvim-open.sh
 
 echo ""
-echo "==> Done! Run 'wsl --shutdown' then reopen WSL to apply changes."
+echo "==> Done!"

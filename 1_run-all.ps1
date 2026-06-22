@@ -2,6 +2,7 @@
 # Runs all steps in order: WSL install, nvim setup, registry import
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Write-Host "ScriptDir: [$ScriptDir]"
 
 # Step 1: WSL + Ubuntu
 Write-Host "==> Step 1: WSL and Ubuntu setup" -ForegroundColor Cyan
@@ -23,12 +24,17 @@ if ($ImportExisting -eq "y" -or $ImportExisting -eq "Y") {
     Write-Host "    Done." -ForegroundColor Green
 } else {
     Write-Host "    Installing WSL and Ubuntu..." -ForegroundColor Cyan
+    Write-Host "    Type exit after setting up Ubuntu"
     wsl --install -d Ubuntu
     Write-Host "    Migrating to $WslDir..." -ForegroundColor Cyan
     wsl --export Ubuntu "$WslDir\ubuntu-backup.tar"
     wsl --unregister Ubuntu
     wsl --import Ubuntu $WslDir "$WslDir\ubuntu-backup.tar"
     Remove-Item "$WslDir\ubuntu-backup.tar"
+    # kill race condition
+    wsl --shutdown
+    Start-Sleep -Seconds 3
+    wsl -d Ubuntu true 
     Write-Host "    Done." -ForegroundColor Green
 }
 
@@ -37,8 +43,13 @@ Write-Host "==> Step 2: Running nvim setup in WSL..." -ForegroundColor Cyan
 $WinPath = Join-Path $ScriptDir "2_nvim-setup.sh"
 $Drive = $WinPath[0].ToString().ToLower()
 $BashScript = "/mnt/$Drive/" + $WinPath.Substring(3).Replace("\", "/")
+Write-Host "BashScript: [$BashScript]"
 wsl -d Ubuntu bash $BashScript
-Write-Host "    Done." -ForegroundColor Green
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "    Failed (exit code: $LASTEXITCODE)" -ForegroundColor Red
+} else {
+    Write-Host "    Done." -ForegroundColor Green
+}
 
 # Step 3: Registry import
 Write-Host "==> Step 3: Importing registry..." -ForegroundColor Cyan
@@ -145,5 +156,5 @@ if (Test-Path $SettingsPath) {
 }
 
 Write-Host ""
-Write-Host "==> All done. Run 'wsl --shutdown && wsl' to restart WSL." -ForegroundColor Yellow
+Write-Host "==> All done." -ForegroundColor Yellow
 
