@@ -1,14 +1,16 @@
 #!/bin/bash
-# Neovim + LazyVim setup script for WSL Ubuntu
-# Run this inside WSL after completing Ubuntu first-run setup
+set -euo pipefail
 
-set -e
+# Neovim + LazyVim setup script
 
 echo "==> Updating apt..."
 sudo apt update && sudo apt upgrade -y
 
 echo "==> Installing dependencies..."
-sudo apt install -y git curl unzip ripgrep fd-find python3 python3-pip nodejs npm xclip xsel
+sudo apt install -y git curl unzip build-essential \
+  xclip xsel \
+  ripgrep fd-find fzf sd \
+  python3 python3-pip nodejs npm
 
 # fd-find installs as fdfind, LazyVim expects fd
 if ! command -v fd &>/dev/null; then
@@ -26,6 +28,16 @@ sudo mv nvim-linux-x86_64 /opt/nvim
 sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
 rm nvim-linux-x86_64.tar.gz
 echo "Neovim $(nvim --version | head -1) installed"
+
+echo "==> Registering nvim as system default editor..."
+sudo update-alternatives --install /usr/bin/editor editor /usr/local/bin/nvim 60
+sudo update-alternatives --set editor /usr/local/bin/nvim
+if ! grep -q "export EDITOR=/usr/local/bin/nvim" ~/.profile 2>/dev/null; then
+  printf '\nexport EDITOR=/usr/local/bin/nvim' >>~/.profile
+fi
+if ! grep -q "export VISUAL=/usr/local/bin/nvim" ~/.profile 2>/dev/null; then
+  printf '\nexport VISUAL=/usr/local/bin/nvim' >>~/.profile
+fi
 
 echo "==> Installing LazyVim..."
 # Back up existing config if present
