@@ -101,20 +101,6 @@ if (Test-Path $SettingsPath) {
         $s.profiles.list += $nvim
     }
 
-    # Configure Ubuntu profile
-    $ExistingUbuntu = $s.profiles.list |
-        Where-Object { $_.name -eq "Ubuntu" } |
-        Select-Object -First 1
-    if ($null -ne $ExistingUbuntu) {
-        $ExistingUbuntu.hidden = $false
-        $ExistingUbuntu.name = "Ubuntu"
-        $ExistingUbuntu | Add-Member `
-            -MemberType NoteProperty `
-            -Name commandline `
-            -Value "wsl.exe -d Ubuntu" `
-            -Force
-    }
-
     $s | ConvertTo-Json -Depth 10 | Set-Content $SettingsPath -Encoding UTF8
       Write-Host "    Done." -ForegroundColor Green
 } else {
