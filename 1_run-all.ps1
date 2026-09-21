@@ -6,37 +6,7 @@ Write-Host "ScriptDir: [$ScriptDir]"
 
 # Step 1: WSL + Ubuntu
 Write-Host "==> Step 1: WSL and Ubuntu setup" -ForegroundColor Cyan
-$WslDir = Read-Host "    Where should WSL be stored? [D:\WSL]"
-if (-not $WslDir) { $WslDir = "D:\WSL" }
-New-Item -ItemType Directory -Force -Path $WslDir | Out-Null
-
-$ImportExisting = Read-Host "    Import an existing WSL backup? (y/N)"
-if ($ImportExisting -eq "y" -or $ImportExisting -eq "Y") {
-    $BackupPath = Read-Host "    Path to backup file (.tar or .vhdx)"
-    if ($BackupPath -match '\.vhdx$') {
-        Write-Host "    Registering vhdx in $WslDir..." -ForegroundColor Cyan
-        Copy-Item $BackupPath "$WslDir\ext4.vhdx" -ErrorAction SilentlyContinue
-        wsl --import-in-place Ubuntu "$WslDir\ext4.vhdx"
-    } else {
-        Write-Host "    Importing tar into $WslDir..." -ForegroundColor Cyan
-        wsl --import Ubuntu $WslDir $BackupPath
-    }
-    Write-Host "    Done." -ForegroundColor Green
-} else {
-    Write-Host "    Installing WSL and Ubuntu..." -ForegroundColor Cyan
-    Write-Host "    Type exit after setting up Ubuntu"
-    wsl --install -d Ubuntu
-    Write-Host "    Migrating to $WslDir..." -ForegroundColor Cyan
-    wsl --export Ubuntu "$WslDir\ubuntu-backup.tar"
-    wsl --unregister Ubuntu
-    wsl --import Ubuntu $WslDir "$WslDir\ubuntu-backup.tar"
-    Remove-Item "$WslDir\ubuntu-backup.tar"
-    # kill race condition
-    wsl --shutdown
-    Start-Sleep -Seconds 3
-    wsl -d Ubuntu true 
-    Write-Host "    Done." -ForegroundColor Green
-}
+wsl --install -d Ubuntu
 
 # Step 2: nvim setup inside WSL
 Write-Host "==> Step 2: Running nvim setup in WSL..." -ForegroundColor Cyan
@@ -132,21 +102,17 @@ if (Test-Path $SettingsPath) {
     }
 
     # Configure Ubuntu profile
-    $ExistingUbuntu = $s.profiles.list | Where-Object { $_.name -eq "Ubuntu" }
+    $ExistingUbuntu = $s.profiles.list |
+        Where-Object { $_.name -eq "Ubuntu" } |
+        Select-Object -First 1
     if ($null -ne $ExistingUbuntu) {
-      # Update target properties while keeping the auto-detection feature intact
-      $ExistingUbuntu.hidden = $false
-      $ExistingUbuntu.commandline = "wsl.exe -d Ubuntu"
-      $ExistingUbuntu.name = "Ubuntu"
-    } else {
-      # Create a new profile if it does not exist
-      $NewUbuntu = [PSCustomObject]@{
-        commandline = "wsl.exe -d Ubuntu"
-          guid        = "{$([System.Guid]::NewGuid())}"
-          hidden      = $false
-          name        = "Ubuntu"
-      }
-      $s.profiles.list += $NewUbuntu
+        $ExistingUbuntu.hidden = $false
+        $ExistingUbuntu.name = "Ubuntu"
+        $ExistingUbuntu | Add-Member `
+            -MemberType NoteProperty `
+            -Name commandline `
+            -Value "wsl.exe -d Ubuntu" `
+            -Force
     }
 
     $s | ConvertTo-Json -Depth 10 | Set-Content $SettingsPath -Encoding UTF8
@@ -157,4 +123,3 @@ if (Test-Path $SettingsPath) {
 
 Write-Host ""
 Write-Host "==> All done." -ForegroundColor Yellow
-
