@@ -42,12 +42,13 @@ if [[ -z "$NVIM_URL" || "$NVIM_URL" == "null" ]]; then
   exit 1
 fi
 
-curl -fL "$NVIM_URL" -o nvim-linux-x86_64.tar.gz
-tar -xzf nvim-linux-x86_64.tar.gz
+TMP_DIR="$(mktemp -d)"
+curl -fL "$NVIM_URL" -o "$TMP_DIR/nvim.tar.gz"
+tar -xzf "$TMP_DIR/nvim.tar.gz" -C "$TMP_DIR"
 sudo rm -rf /opt/nvim
-sudo mv nvim-linux-x86_64 /opt/nvim
+sudo mv "$TMP_DIR/nvim-linux-x86_64" /opt/nvim
 sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
-rm -f nvim-linux-x86_64.tar.gz
+rm -rf "$TMP_DIR"
 echo "Neovim $(nvim --version | head -n 1) installed"
 
 echo "==> Registering nvim as system default editor..."
