@@ -8,7 +8,7 @@ sudo apt update && sudo apt upgrade -y
 
 echo "==> Installing dependencies..."
 sudo apt install -y git curl jq unzip build-essential \
-  xclip xsel \
+  xclip xsel language-pack-ko \
   ripgrep fd-find fzf sd \
   python3 python3-pip nodejs npm
 
